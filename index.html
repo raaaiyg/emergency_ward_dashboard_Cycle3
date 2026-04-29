@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emergency Ward Dashboard - Feedback Revised Version</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Feedback Applied Revision</div>
+        <h1>Emergency Ward Command Dashboard</h1>
+        <p>Improved prototype based on Cycle 2 tester feedback, with stronger patient list sorting, richer chart analysis, clearer priority indicators, and more interactive filters.</p>
+      </div>
+      <div class="hero-panel">
+        <div class="hero-number" id="livePatients">0</div>
+        <div class="hero-label">active patients</div>
+        <div class="hero-mini" id="heroPressure">Operational pressure loading</div>
+      </div>
+    </header>
+
+    <section class="revision-banner">
+      <div>
+        <h2>Key feedback themes addressed</h2>
+        <p>Testers found the revised design clearer, calmer, and easier to follow, but asked for more detailed chart analysis, more interactive filters, and a stronger patient list table. This version directly targets those points.</p>
+      </div>
+      <div class="revision-tags">
+        <span>sortable patient list</span>
+        <span>priority scoring</span>
+        <span>detailed chart insights</span>
+        <span>interactive filters</span>
+        <span>real checklist actions</span>
+      </div>
+    </section>
+
+    <section class="toolbar card">
+      <div class="control">
+        <label>Date</label>
+        <select id="dateFilter"></select>
+      </div>
+      <div class="control">
+        <label>Shift</label>
+        <select id="shiftFilter">
+          <option value="All">All</option>
+          <option value="Day">Day</option>
+          <option value="Night">Night</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Zone</label>
+        <select id="zoneFilter"></select>
+      </div>
+      <div class="control">
+        <label>Acuity</label>
+        <select id="acuityFilter"></select>
+      </div>
+      <div class="control">
+        <label>Arrival mode</label>
+        <select id="arrivalFilter"></select>
+      </div>
+      <div class="control">
+        <label>Patient view</label>
+        <select id="viewFilter">
+          <option value="All">All patients</option>
+          <option value="HighPriority">High priority only</option>
+          <option value="ActiveOnly">Active patients only</option>
+          <option value="CompletedOnly">Completed journeys only</option>
+        </select>
+      </div>
+      <div class="control search-box">
+        <label>Search</label>
+        <input id="searchFilter" placeholder="Patient ID, clinician, alert, or stage" />
+      </div>
+      <button class="btn secondary" id="resetBtn">Reset</button>
+      <button class="btn primary" id="exportBtn">Export CSV</button>
+    </section>
+
+    <section class="active-filters card">
+      <strong>Active filters:</strong>
+      <span id="filterSummary">All visible records</span>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="flow">Patient Flow</button>
+      <button class="tab" data-tab="analysis">Chart Analysis</button>
+      <button class="tab" data-tab="staffing">Staffing and Beds</button>
+      <button class="tab" data-tab="incident">Incident Command</button>
+      <button class="tab" data-tab="feedback">Feedback Applied</button>
+    </nav>
+
+    <section class="kpi-grid" id="kpiGrid"></section>
+
+    <main>
+      <section id="panel-overview" class="panel active">
+        <div class="grid">
+          <article class="card span-8">
+            <div class="card-title">
+              <div>
+                <h3>Patient flow by stage</h3>
+                <p>Shows current pressure by pathway stage, now with target notes and clearer interpretation.</p>
+              </div>
+              <span class="small-pill">Live demo data</span>
+            </div>
+            <div id="stageBars" class="bar-list"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Immediate risk queue</h3>
+                <p>Patients ranked by calculated priority score.</p>
+              </div>
+            </div>
+            <div id="riskQueue" class="stack"></div>
+          </article>
+
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Arrivals, discharges and occupancy trend</h3>
+                <p>More detailed chart than Cycle 2, with multiple operational signals.</p>
+              </div>
+            </div>
+            <div id="overviewLineChart" class="svg-chart"></div>
+            <div id="overviewLegend" class="legend"></div>
+          </article>
+
+          <article class="card span-3">
+            <div class="card-title">
+              <div>
+                <h3>Acuity mix</h3>
+                <p>Numbers and percentages for easier reading.</p>
+              </div>
+            </div>
+            <div id="acuityBreakdown" class="bar-list compact"></div>
+          </article>
+
+          <article class="card span-3">
+            <div class="card-title">
+              <div>
+                <h3>Operational alerts</h3>
+                <p>Prioritised alert list for the shift lead.</p>
+              </div>
+            </div>
+            <div id="alerts" class="stack"></div>
+          </article>
+
+          <article class="card span-12">
+            <div class="card-title">
+              <div>
+                <h3>Dashboard interpretation</h3>
+                <p>Added because testers asked for more analysis rather than only basic charts.</p>
+              </div>
+            </div>
+            <div id="interpretation" class="insight-grid"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-flow" class="panel">
+        <div class="grid">
+          <article class="card span-3">
+            <div class="card-title">
+              <div>
+                <h3>Queue map by stage</h3>
+                <p>Colour indicates acuity. Card order follows priority.</p>
+              </div>
+            </div>
+            <div id="queueMap" class="queue-map"></div>
+          </article>
+
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Improved patient list table</h3>
+                <p>Sortable columns and priority score added because testers said the table needed more clarity.</p>
+              </div>
+              <select id="sortSelect" class="mini-select">
+                <option value="priorityDesc">Sort by priority</option>
+                <option value="waitDesc">Longest wait first</option>
+                <option value="acuity">Acuity level</option>
+                <option value="stage">Pathway stage</option>
+                <option value="id">Patient ID</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table id="patientTable">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Priority</th>
+                    <th>Acuity</th>
+                    <th>Zone</th>
+                    <th>Stage</th>
+                    <th>Time in dept</th>
+                    <th>Door to triage</th>
+                    <th>Door to clinician</th>
+                    <th>Clinician</th>
+                    <th>Alerts</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card span-3">
+            <div class="card-title">
+              <div>
+                <h3>Selected patient panel</h3>
+                <p>Click a table row to update details.</p>
+              </div>
+            </div>
+            <div id="selectedPatient" class="summary-grid single"></div>
+          </article>
+
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Escalation guidance</h3>
+                <p>Non misleading guidance statements retained from Cycle 2, now matched to the priority table.</p>
+              </div>
+            </div>
+            <ul id="rules" class="clean-list"></ul>
+          </article>
+
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Patient list improvements made</h3>
+                <p>Direct response to the feedback that the patient table could be improved and should not rely only on colours.</p>
+              </div>
+            </div>
+            <ul class="clean-list">
+              <li>Added numerical priority score beside the colour labels.</li>
+              <li>Added sorting by priority, waiting time, acuity, stage, and patient ID.</li>
+              <li>Added alert text in the table so meaning is not hidden in colours only.</li>
+              <li>Added high priority only view in the filter bar.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-analysis" class="panel">
+        <div class="grid">
+          <article class="card span-7">
+            <div class="card-title">
+              <div>
+                <h3>Detailed clinical operations chart</h3>
+                <p>Richer chart analysis added because testers said some charts were still basic.</p>
+              </div>
+              <select id="analysisMode" class="mini-select">
+                <option value="pressure">Pressure indicators</option>
+                <option value="flow">Flow balance</option>
+                <option value="handover">Handover focus</option>
+              </select>
+            </div>
+            <div id="analysisChart" class="svg-chart large"></div>
+            <div id="analysisLegend" class="legend"></div>
+          </article>
+
+          <article class="card span-5">
+            <div class="card-title">
+              <div>
+                <h3>Chart insights</h3>
+                <p>Short written interpretation to support better real clinical usefulness.</p>
+              </div>
+            </div>
+            <div id="chartInsights" class="stack"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Breach reason analysis</h3>
+                <p>Demo split of why 4 hour risk is appearing.</p>
+              </div>
+            </div>
+            <div id="breachBars" class="bar-list compact"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Filter impact panel</h3>
+                <p>Shows how the selected filters change the data view.</p>
+              </div>
+            </div>
+            <div id="filterImpact" class="summary-grid"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Suggested next data points</h3>
+                <p>Added to strengthen clinical realism.</p>
+              </div>
+            </div>
+            <ul class="clean-list">
+              <li>Imaging turnaround time by modality</li>
+              <li>Lab turnaround time by test type</li>
+              <li>Ambulance handover delay by arrival hour</li>
+              <li>Bed request to bed allocated time</li>
+              <li>Staffing gap by hour and zone</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-staffing" class="panel">
+        <div class="grid">
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Roster coverage</h3>
+                <p>Staffing was identified as a useful section, so it has been strengthened.</p>
+              </div>
+            </div>
+            <div id="staffingCards" class="stack"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Coverage heatmap by hour</h3>
+                <p>New view showing how staffing pressure changes through the shift.</p>
+              </div>
+            </div>
+            <div id="coverageHeatmap" class="heatmap"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Bed and cubicle state</h3>
+                <p>Area status with blocked and cleaning spaces highlighted.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="bedTable">
+                <thead>
+                  <tr>
+                    <th>Area</th>
+                    <th>Open</th>
+                    <th>Occupied</th>
+                    <th>Cleaning</th>
+                    <th>Blocked</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card span-5">
+            <div class="card-title">
+              <div>
+                <h3>Bed turnaround</h3>
+                <p>Shows which spaces are ready and which are delayed.</p>
+              </div>
+            </div>
+            <div id="bedTurnaround" class="bar-list"></div>
+          </article>
+
+          <article class="card span-3">
+            <div class="card-title">
+              <div>
+                <h3>Break coverage planner</h3>
+                <p>Visible planning support.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="breakTable">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Role</th>
+                    <th>Zone</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Operational risk register</h3>
+                <p>Shift risks that need management attention.</p>
+              </div>
+            </div>
+            <div id="riskRegister" class="stack"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-incident" class="panel">
+        <div class="grid">
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Current incident summary</h3>
+                <p>Headline facts for the current operational situation.</p>
+              </div>
+            </div>
+            <div id="incidentSummary" class="summary-grid"></div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Action tracker</h3>
+                <p>Status values are now editable within the prototype.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="actionTable">
+                <thead>
+                  <tr>
+                    <th>Action</th>
+                    <th>Owner</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card span-4">
+            <div class="card-title">
+              <div>
+                <h3>Pressure monitor</h3>
+                <p>Multi signal view for surge management.</p>
+              </div>
+            </div>
+            <div id="incidentPressureChart" class="svg-chart"></div>
+            <div id="incidentLegend" class="legend"></div>
+          </article>
+
+          <article class="card span-7">
+            <div class="card-title">
+              <div>
+                <h3>Escalation checklist</h3>
+                <p>Checklist boxes now work, avoiding the fake interactivity issue.</p>
+              </div>
+            </div>
+            <div id="checklist" class="checklist"></div>
+          </article>
+
+          <article class="card span-5">
+            <div class="card-title">
+              <div>
+                <h3>Communications panel</h3>
+                <p>Structured updates for site teams and departments.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="commTable">
+                <thead>
+                  <tr>
+                    <th>Audience</th>
+                    <th>Message summary</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="panel-feedback" class="panel">
+        <div class="grid">
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Feedback themes used for this revision</h3>
+                <p>This page can be screenshotted as evidence that tester feedback was translated into design action.</p>
+              </div>
+            </div>
+            <div id="feedbackThemes" class="stack"></div>
+          </article>
+
+          <article class="card span-6">
+            <div class="card-title">
+              <div>
+                <h3>Change log from Cycle 2 to this revision</h3>
+                <p>Clear design traceability for the portfolio.</p>
+              </div>
+            </div>
+            <div id="changeLog" class="stack"></div>
+          </article>
+
+          <article class="card span-12">
+            <div class="card-title">
+              <div>
+                <h3>Recommended next testing focus</h3>
+                <p>Use this after sending the revised version to testers.</p>
+              </div>
+            </div>
+            <ul class="clean-list two-col">
+              <li>Can users sort the patient list correctly without guidance?</li>
+              <li>Does the priority score make patient risk easier to understand?</li>
+              <li>Are the chart insights detailed enough without feeling cluttered?</li>
+              <li>Do the filter chips and filter impact panel make filtering clearer?</li>
+              <li>Does the staffing heatmap add useful operational meaning?</li>
+              <li>Do the action tracker and checklist now feel properly interactive?</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Educational prototype only. Demo patient data is fictional and must not be used for real clinical decision making.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
